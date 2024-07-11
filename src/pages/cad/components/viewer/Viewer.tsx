@@ -1,15 +1,28 @@
 import { useEffect, useRef } from "react";
-import setUpRootScene, { RootScene } from "./setUpRootScene";
+import setUpRootScene, { destroyRootScene, RootScene } from "./setUpRootScene";
 
 export default function CadViewer() {
   const host = useRef(null);
 
-  useEffect(() => {
-    if(host.current) {
-      const rootScene: RootScene = setUpRootScene(host.current);
+  let rootScene: RootScene;
 
-      window.onresize = () => rootScene.onResize(host.current)
+  const onResize = () => rootScene.onResize(host.current);
+
+  const initViewer = () => {
+    if (host.current) {
+      rootScene = setUpRootScene(host.current);
+      window.onresize = onResize;
     }
+  };
+
+  const destroy = () => {
+    destroyRootScene()
+  };
+
+  useEffect(() => {
+    initViewer();
+
+    return () => destroy();
   }, []);
 
   return <div className="cad-viewer" ref={host}></div>;

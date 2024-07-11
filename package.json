@@ -18,7 +18,7 @@
     "antd": "^5.18.3",
     "dpr": "^0.3.0",
     "lodash": "^4.17.21",
-    "opencascade.js": "^2.0.0-beta.b5ff984",
+    "opencascade.js": "2.0.0-beta.54fa06a",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.24.0",

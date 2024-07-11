@@ -1,27 +1,35 @@
 .cad {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+
+  .slider-bar {
+    width: 100px;
+    border-right: 1px solid #c2c2c2;
+  }
+
+  .container {
     display: flex;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
+    flex-direction: column;
+    flex: 1;
 
-    .slider-bar {
-        width: 100px;
-        border-right: 1px solid #c2c2c2;
+    .commands {
+      height: 60px;
+      border-bottom: 1px solid #c2c2c2;
     }
 
-    .container {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-
-        .commands {
-            height: 60px;
-            border-bottom: 1px solid #c2c2c2;
-        }
-
-        .cad-viewer {
-            flex: 1;
-            padding-right: 12px;
-        }
+    .cad-viewer {
+      position: relative;
+      flex: 1;
+      padding-right: 12px;
+      padding-bottom: 12px;
     }
+
+    .lil-gui {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+  }
 }
