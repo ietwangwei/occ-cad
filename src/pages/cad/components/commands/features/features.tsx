@@ -1,69 +1,62 @@
-import { getOcc, getVerticesByShape } from "@/core/occ";
-import "./features.scss";
-import { TopoDS_Shape } from "opencascade.js";
-import {
-  BufferAttribute,
-  BufferGeometry,
-  Mesh,
-  MeshBasicMaterial,
-  Object3D,
-} from "three";
 import { getRootScene } from "../../viewer/setUpRootScene";
 import SvgIcon from "@/components/SvgIcon";
 import { Feature, features } from "./variables";
-import { addUi, showUi } from "@/pages/cad/helpers/uiHelper";
+import _ from "lodash";
+import * as GuiHelper from "@/pages/cad/helpers/uiHelper";
+import "./features.scss";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
+import { createMesh, destroyMesh, updateFeature } from "./utils";
+import { getOcc } from "@/core/occ";
 
 export default function Features() {
-  const _occ = getOcc();
   const rootScene = getRootScene();
-  let material = new MeshBasicMaterial({ color: 0xf2f2f2 });
-  let geometry = new BufferGeometry();
-  let mesh: Object3D;
-  let options: any;
-  let ui: GUI;
+  let currentMesh: any;
+  let currentFeature: any;
+  let ui: GUI | null = null;
+  let currentOptions: any;
+  const _occ = getOcc();
+  const destory = () => {};
+
+  const onchange = (key: string, value: any, subKey?: string) => {
+    console.log(key, value, subKey)
+    if (currentOptions && rootScene?.scene) {
+      subKey ? currentOptions[subKey] : currentOptions[key][0] = value;
+      updateFeature(_occ, rootScene.scene, currentMesh, currentOptions);
+    }
+  };
 
   const onOk = () => {
-    if(mesh) {
-      addUi(mesh.id, options)
+    if (currentMesh) {
+      GuiHelper.addUi(currentMesh.uuid, currentMesh);
+      ui?.destroy();
     }
-  };
-  const onCancel = () => {
-    if (ui && rootScene && rootScene.scene) {
-      material.dispose();
-      geometry.dispose();
-      rootScene?.scene.remove(mesh);
-      ui.destroy();
-    }
-  };
-  const onChange = (key: string, value: any) => {
-    console.log(key, value);
   };
 
-  const activeFeature = (feature: Feature) => {
-    if (ui) {
-      ui.destroy();
+  const oncancel = () => {
+    if (rootScene?.scene && currentMesh) {
+      rootScene.scene.remove(currentMesh);
+      destroyMesh(currentMesh);
+      ui?.destroy();
     }
-    let shape: TopoDS_Shape | null = null;
-    options = feature.options;
-    switch (feature.name) {
-      case "Box":
-        shape = new _occ.BRepPrimAPI_MakeBox_2(
-          options.dx,
-          options.dy,
-          options.dz
-        ).Shape();
-        break;
-      case "Sphere":
-        shape = new _occ.BRepPrimAPI_MakeSphere_1(options.r).Shape();
-        break;
-    }
-    if (shape && rootScene && rootScene.scene) {
-      const vertices = getVerticesByShape(shape);
-      geometry.setAttribute("position", new BufferAttribute(vertices, 3));
-      mesh = new Mesh(geometry, material);
-      rootScene.scene.add(mesh);
-      ui = showUi(rootScene.container, options, onOk, onCancel, onChange);
+  };
+
+  const clickHandler = (feature: Feature) => {
+    if (rootScene?.scene) {
+      if (currentMesh && !GuiHelper.getUiMap().has(currentMesh.uuid)) {
+        rootScene.scene.remove(currentMesh);
+      }
+      ui?.destroy();
+      currentFeature = features.find((fe: Feature) => fe.name === feature.name);
+      currentOptions = _.cloneDeep(currentFeature.options);
+      currentMesh = createMesh(_occ, currentFeature.name, currentOptions);
+      rootScene.scene.add(currentMesh);
+      ui = GuiHelper.showUi(
+        rootScene.container,
+        currentOptions,
+        onOk,
+        oncancel,
+        onchange
+      );
     }
   };
 
@@ -74,7 +67,7 @@ export default function Features() {
           <div
             className="feature"
             key={feature.name}
-            onClick={() => activeFeature(feature)}
+            onClick={() => clickHandler(feature)}
           >
             <SvgIcon name={feature.icon} title={"he"} />
           </div>

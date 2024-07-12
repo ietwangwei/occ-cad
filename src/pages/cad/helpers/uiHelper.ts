@@ -1,16 +1,45 @@
-import { Color } from "three";
+import { Color, Vector3 } from "three";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 
 const uisMap = new Map();
 
-export function addUi(id: number, options: any) {
-  uisMap.set(id, options);
+export function getUiMap() {
+  return uisMap;
 }
 
-export function removeUI(id: number) {
-  if (uisMap.has(id)) {
-    uisMap.delete(id);
+export function addUi(uuid: string, options: any) {
+  uisMap.set(uuid, options);
+}
+
+export function removeUI(uuid: string) {
+  if (uisMap.has(uuid)) {
+    uisMap.delete(uuid);
   }
+}
+
+export function generateUIRows(
+  ui: GUI,
+  options: any,
+  onChange: (key: string, value: any, subKey?: string) => void,
+  subKey?: string
+) {
+  for (let key in options) {
+    const option: any = options[key];
+    if (Array.isArray(option)) {
+      const control: any = {};
+      control[key] = option[0];
+      ui.add(control, key, option[1], option[2], option[3]);
+      ui.onChange((value) => {
+        onChange(key, value, subKey);
+      });
+    } else if (option instanceof Color) {
+      ui.addColor(options, key);
+    } else if (typeof option === "object") {
+      const sub = ui.addFolder(key);
+      generateUIRows(sub, option, onChange, key);
+    }
+  }
+  return ui;
 }
 
 export function showUi(
@@ -18,20 +47,11 @@ export function showUi(
   options: any,
   onOk: () => void,
   onCancel: () => void,
-  onChange: (key: string, value: any) => void
+  onChange: (key: string, value: any, subKey?: string) => void
 ) {
-  const ui: GUI = new GUI({ container, width: 300 });
-  for (let key in options) {
-    const option: any = options[key];
-    if (option instanceof Color) {
-      ui.addColor(options, key);
-    } else if (typeof option === "number") {
-      ui.add(options, key);
-    }
-    ui.onChange((value: any) => onChange(key, value));
-  }
+  let ui: GUI = new GUI({ container, width: 300 });
+  ui = generateUIRows(ui, options, onChange);
   ui.add({ onOk }, "onOk");
   ui.add({ onCancel }, "onCancel");
-
   return ui;
 }

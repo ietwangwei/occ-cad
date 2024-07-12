@@ -16,7 +16,7 @@ export async function initOcc() {
   _occ = await initOpenCascade();
 }
 
-export function getOcc() {
+export function getOcc(): OpenCascadeInstance {
   return _occ;
 }
 
